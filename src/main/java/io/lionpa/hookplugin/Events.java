@@ -1,13 +1,11 @@
 package io.lionpa.hookplugin;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -25,6 +23,7 @@ import java.util.Objects;
 public class Events implements Listener {
     public static final NamespacedKey ENTITY_KEY = new NamespacedKey(HookPlugin.getPlugin(),"entity");
     public static final NamespacedKey OWNER_KEY = new NamespacedKey(HookPlugin.getPlugin(),"owner");
+    public static final NamespacedKey DAMAGE_MULTIPLIER = new NamespacedKey(HookPlugin.getPlugin(),"damage_multiplier");
     @EventHandler
     public static void hookUsed(ProjectileLaunchEvent e){
         if (!(e.getEntity().getShooter() instanceof Player player)) return;
@@ -58,8 +57,16 @@ public class Events implements Listener {
 
         Player player = Bukkit.getPlayer(data.get(OWNER_KEY, PersistentDataType.STRING));
 
+        if (e.getHitEntity() == player) {
+            e.setCancelled(true);
+            return;
+        }
+
         if (e.getHitEntity() != null){
-            e.getHitEntity().setVelocity(player.getLocation().toVector().subtract(e.getHitEntity().getLocation().toVector()).multiply(0.2));
+            if (!(e.getHitEntity() instanceof LivingEntity entity)) return;
+            hookEntity(player,entity);
+            e.getEntity().remove();
+            return;
         }
         if (e.getHitBlock() == null){
             e.getEntity().remove();
@@ -84,19 +91,58 @@ public class Events implements Listener {
                 player.setVelocity(playerVelocity);
 
                 spawnChains(player,hook.getLocation());
+
+                playSound(player,playerVelocity);
             }
         }.runTaskTimer(HookPlugin.getPlugin(),0,1);
 
+        killTimer(hook,4,task,true);
+    }
+    private static void hookEntity(Player player, LivingEntity entity){
+        BukkitTask task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (entity.isDead()) {
+                    cancel();
+                }
+
+                if (player.getLocation().getNearbyEntitiesByType(entity.getType().getEntityClass(),2,2,2).contains(entity)) {
+                    entity.setVelocity(entity.getVelocity().multiply(0.3f));
+                    entity.getPersistentDataContainer().set(DAMAGE_MULTIPLIER,PersistentDataType.FLOAT,1.5f);
+                    cancel();
+                }
+
+                Vector velocity = player.getLocation().toVector().subtract(entity.getLocation().toVector()).multiply(0.25f);
+
+                Vector entityVelocity = player.getVelocity().add(velocity);
+                limitVelocity(entityVelocity);
+
+                entity.setVelocity(entityVelocity);
+
+                spawnChains(player,entity.getEyeLocation());
+
+                playSound(player,entityVelocity);
+            }
+        }.runTaskTimer(HookPlugin.getPlugin(),0,1);
+
+        killTimer(entity,8,task,false);
+    }
+    private static void playSound(Player player, Vector velocity){
+        if (Bukkit.getCurrentTick() % (1f / velocity.length()) < 0.5f)
+            player.getWorld().playSound(player, Sound.BLOCK_CHAIN_STEP,SoundCategory.MASTER,0.3f, 0.3f);
+    }
+    private static void killTimer(Entity entity, int time, BukkitTask task, boolean kill){
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (!hook.isDead()) {
+                if (!entity.isDead()) {
                     task.cancel();
-                    hook.remove();
+                    if (kill) entity.remove();
                 }
             }
-        }.runTaskLater(HookPlugin.getPlugin(),4 * 20);
+        }.runTaskLater(HookPlugin.getPlugin(),time * 20L);
     }
+
     private static final float X_LIMIT = 1.6f;
     private static final float Y_LIMIT = 1.6f;
     private static final float Z_LIMIT = 1.6f;
@@ -148,22 +194,10 @@ public class Events implements Listener {
 
         return a.setX(x).setY(y).setZ(z);
     }
-    private static float normal(float angle){
-        angle = angle % 360;
-
-        angle = (angle + 360) % 360;
-
-        if (angle > 180)
-            angle -= 360;
-        return angle;
-    }
-    private static float[] getRotation(Player player, float x, float y, float z){
-        double dX = x - player.getEyeLocation().x();
-        double dY = player.getEyeLocation().y() - y;
-        double dZ = z - player.getEyeLocation().z();
-
-        float lookYaw = normal((float) (Math.toDegrees(Math.atan2(dZ, dX)) - 90));
-        float lookPitch = (float) Math.toDegrees(Math.atan2(dY, Math.sqrt(dX * dX + dZ * dZ)));
-        return new float[]{lookPitch, lookYaw};
+    @EventHandler
+    public static void damage(EntityDamageByEntityEvent e){
+        if (!e.getEntity().getPersistentDataContainer().has(DAMAGE_MULTIPLIER)) return;
+        e.setDamage(e.getDamage() * e.getEntity().getPersistentDataContainer().get(DAMAGE_MULTIPLIER,PersistentDataType.FLOAT));
+        e.getEntity().getPersistentDataContainer().remove(DAMAGE_MULTIPLIER);
     }
 }
