@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="HookPlugin">
+    <output-path>D:/.Plugins/Servers/1.20.2 server/plugins</output-path>
+    <root id="archive" name="HookPlugin.jar">
+      <element id="module-output" name="HookPlugin" />
+      <element id="dir-copy" path="$PROJECT_DIR$/src/main/resources" />
+    </root>
+  </artifact>
+</component>

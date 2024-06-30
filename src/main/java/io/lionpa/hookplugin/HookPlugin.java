@@ -1,17 +1,40 @@
 package io.lionpa.hookplugin;
 
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.World;
+import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Entity;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class HookPlugin extends JavaPlugin {
+import java.util.Objects;
 
+public final class HookPlugin extends JavaPlugin {
+    private static Plugin plugin;
     @Override
     public void onEnable() {
-        // Plugin startup logic
-
+        plugin = this;
+        Items.init();
+        Recipes.init();
+        Bukkit.getPluginManager().registerEvents(new Events(),this);
+        for (World world : Bukkit.getWorlds()){
+            for (Entity entity : world.getEntitiesByClasses(BlockDisplay.class)){
+                if (!entity.getPersistentDataContainer().has(Events.ENTITY_KEY)) continue;
+                if (Objects.equals(entity.getPersistentDataContainer().get(Events.ENTITY_KEY, PersistentDataType.STRING), "visual")){
+                    entity.remove();
+                }
+            }
+        }
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+
+    }
+
+    public static Plugin getPlugin() {
+        return plugin;
     }
 }

@@ -1,0 +1,6 @@
+name: HookPlugin
+version: '1.0-SNAPSHOT'
+main: io.lionpa.hookplugin.HookPlugin
+api-version: '1.20'
+authors: [LionPa]
+website: https://github.com/LionPa
