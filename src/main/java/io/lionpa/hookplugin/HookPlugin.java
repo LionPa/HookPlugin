@@ -1,7 +1,6 @@
 package io.lionpa.hookplugin;
 
 import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
@@ -19,6 +18,8 @@ public final class HookPlugin extends JavaPlugin {
         Items.init();
         Recipes.init();
         Bukkit.getPluginManager().registerEvents(new Events(),this);
+
+        // Удаляет цепи хука
         for (World world : Bukkit.getWorlds()){
             for (Entity entity : world.getEntitiesByClasses(BlockDisplay.class)){
                 if (!entity.getPersistentDataContainer().has(Events.ENTITY_KEY)) continue;
