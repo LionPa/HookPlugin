@@ -15,6 +15,9 @@ public final class HookPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         plugin = this;
+
+        UpdateCheck.init(plugin);
+
         Items.init();
         Recipes.init();
         Bukkit.getPluginManager().registerEvents(new Events(),this);
