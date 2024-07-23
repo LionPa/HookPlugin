@@ -1,0 +1,2 @@
+Last version of plugin. Need for auto update
+1.0.0
