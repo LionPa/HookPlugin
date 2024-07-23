@@ -1,0 +1,21 @@
+## /====-------------------====\ ##
+##|       LionPaAutoUpdate      | ##
+##|              >w<            | ##
+##|  DONT CHANGE THIS CONFIG!!! | ##
+## \====-------------------====/ ##
+
+## Messages
+old_version_message : "HookPlugin has update! Your version: CURRENT, Latest version: NEW"
+update_message : "You can download new version "
+
+## URLS
+version_url : "https://raw.githubusercontent.com/LionPa/HookPlugin/main/version.txt" ## If u change this, plugin may not start!
+new_version_url : "https://github.com/LionPa/HookPlugin/releases"
+
+## Colors
+not_up_to_date_message_color: "#ecf4f3"
+old_version_color: "#006a71"
+new_version_color: "#68b0ab"
+
+update_message_color: "#ff7e67"
+new_version_url_color: "#68b0ab"
