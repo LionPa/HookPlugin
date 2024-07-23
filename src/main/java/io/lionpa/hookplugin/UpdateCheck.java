@@ -16,7 +16,6 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Scanner;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 public class UpdateCheck implements Listener {
@@ -26,8 +25,6 @@ public class UpdateCheck implements Listener {
 
     private static boolean UpToDate;
     private static String latestVersion;
-
-    private static Plugin plugin;
 
     private static void initVars(Plugin plugin){
         YamlConfiguration config = getResource(plugin,"versionData.yml");
@@ -44,25 +41,16 @@ public class UpdateCheck implements Listener {
         NEW_VERSION_URL_COLOR = TextColor.fromHexString((String) config.get("new_version_url_color"));
     }
 
-    public static void init(Plugin pl) {
-        plugin = pl;
+    private static YamlConfiguration getResource(Plugin plugin, String resource){
+        return YamlConfiguration.loadConfiguration(new InputStreamReader(plugin.getResource(resource)));
+    }
+
+    public static void init(Plugin plugin) {
         initVars(plugin);
 
         Bukkit.getPluginManager().registerEvents(new UpdateCheck(), plugin);
 
-        try {
-
-
-            URLConnection openConnection = new URL(URL).openConnection();
-            openConnection.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
-            Scanner scan = new Scanner((new InputStreamReader(openConnection.getInputStream())));
-
-            latestVersion = scan.nextLine();
-            UpToDate = plugin.getPluginMeta().getVersion().equals(latestVersion);
-            System.out.println(latestVersion + " " + plugin.getPluginMeta().getVersion());
-
-        } catch (Exception ignored) {
-        }
+        connectToGithub(plugin);
 
         CURRENT_VERSION_REPLACEMENT = TextReplacementConfig.builder()
                 .match(Pattern.compile("CURRENT"))
@@ -73,35 +61,51 @@ public class UpdateCheck implements Listener {
                 .replacement(Component.text(latestVersion).color(NEW_VERSION_COLOR))
                 .build();
 
+        sendMessagesToOpsPlayers();
+    }
+    private static void connectToGithub(Plugin plugin){
+        try {
+            URLConnection openConnection = new URL(URL).openConnection();
+            openConnection.addRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:25.0) Gecko/20100101 Firefox/25.0");
+            Scanner scan = new Scanner((new InputStreamReader(openConnection.getInputStream())));
+
+            latestVersion = scan.nextLine();
+            UpToDate = plugin.getPluginMeta().getVersion().equals(latestVersion);
+        } catch (Exception ignored) {}
+    }
+
+    private static void sendMessagesToOpsPlayers(){
         for (Player player : Bukkit.getOnlinePlayers()){
             if (!player.isOp()) continue;
-            if (isIsUpToDate()) continue;
+            if (isUpToDate()) continue;
             sendUpdateMessage(player);
         }
     }
 
-    private static YamlConfiguration getResource(Plugin plugin, String resource){
-        return YamlConfiguration.loadConfiguration(new InputStreamReader(plugin.getResource(resource)));
-    }
-
-
-    public static boolean isIsUpToDate() {
-        return UpToDate;
-    }
-
     @EventHandler
     public static void playerJoined(PlayerJoinEvent e){
-        if (isIsUpToDate()) return;
+        if (isUpToDate()) return;
         if (!e.getPlayer().isOp()) return;
 
         sendUpdateMessage(e.getPlayer());
     }
 
     private static void sendUpdateMessage(Player player){
-        Component message = Component.text(OLD_VERSION_MESSAGE).color(NOT_UP_TO_DATE_MESSAGE_COLOR).replaceText(CURRENT_VERSION_REPLACEMENT).replaceText(NEW_VERSION_REPLACEMENT);
-        Component update = Component.text(UPDATE_MESSAGE).append(Component.text("HERE").color(NEW_VERSION_URL_COLOR).clickEvent(ClickEvent.openUrl(NEW_UPDATE_URL))).color(UPDATE_MESSAGE_COLOR);
+        Component message = Component.text(OLD_VERSION_MESSAGE)
+                .color(NOT_UP_TO_DATE_MESSAGE_COLOR)
+                .replaceText(CURRENT_VERSION_REPLACEMENT)
+                .replaceText(NEW_VERSION_REPLACEMENT);
+        Component update = Component.text(UPDATE_MESSAGE)
+                .append(Component.text("HERE")
+                        .color(NEW_VERSION_URL_COLOR)
+                        .clickEvent(ClickEvent.openUrl(NEW_UPDATE_URL)))
+                .color(UPDATE_MESSAGE_COLOR);
 
         player.sendMessage(message);
         player.sendMessage(update);
+    }
+
+    public static boolean isUpToDate() {
+        return UpToDate;
     }
 }

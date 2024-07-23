@@ -6,7 +6,7 @@
 
 ## Messages
 old_version_message : "HookPlugin has update! Your version: CURRENT, Latest version: NEW"
-update_message : "You can download new version "
+update_message : "You can download latest version "
 
 ## URLS
 version_url : "https://raw.githubusercontent.com/LionPa/HookPlugin/main/version.txt" ## If u change this, plugin may not start!
