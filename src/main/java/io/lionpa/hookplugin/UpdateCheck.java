@@ -17,7 +17,7 @@ import java.util.Scanner;
 
 public class UpdateCheck implements Listener {
     private static final String NEW_VERSION_MESSAGE = "HookPlugin has new version! Current version: {CURRENT}, New version: {NEW}";
-    private static final String UPDATE_MESSAGE = "You can download new version on ";
+    private static final String UPDATE_MESSAGE = "You can download new version ";
 
     private static final String URL = "https://raw.githubusercontent.com/LionPa/HookPlugin/main/version.txt";
     private static final String UPDATE_URL = "https://github.com/LionPa/HookPlugin/releases";
